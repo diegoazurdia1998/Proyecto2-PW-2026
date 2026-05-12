@@ -37,11 +37,22 @@ def update_shipment(id):
     data = request.get_json()
 
     shipment.status = data.get('status', shipment.status)
+    shipment.cost = data.get('cost', shipment.cost)
+    shipment.weight = data.get('weight', shipment.weight)
     shipment.destination = data.get('destination', shipment.destination)
-    # Agrega otros campos que el admin pueda editar
+    shipment.recipient_address = data.get('recipient_address', shipment.recipient_address)
+    shipment.recipient_phone = data.get('recipient_phone', shipment.recipient_phone)
+    shipment.package_type = data.get('package_type', shipment.package_type)
 
-    db.session.commit()
-    return jsonify({"message": "Envío actualizado"}), 200
+    try:
+        db.session.commit()
+        return jsonify({
+            "message": "Envío actualizado con éxito",
+            "shipment": shipment.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Error al actualizar", "error": str(e)}), 500
 
 def delete_shipment(id):
     shipment = Shipment.query.get_or_404(id)
