@@ -4,29 +4,15 @@ import { Package, Plus, User, LogOut, PackageOpen } from "lucide-react";
 export function ClientDashboard() {
   const location = useLocation();
 
-  const shipments = [
-    {
-      code: "SKY123456789GT",
-      destination: "Quetzaltenango",
-      date: "2026-05-05",
-      status: "En Tránsito",
-      cost: "Q 125.00"
-    },
-    {
-      code: "SKY987654321GT",
-      destination: "Escuintla",
-      date: "2026-05-03",
-      status: "Entregado",
-      cost: "Q 85.00"
-    },
-    {
-      code: "SKY456789123GT",
-      destination: "Petén",
-      date: "2026-05-01",
-      status: "Pendiente",
-      cost: "Q 250.00"
-    }
-  ];
+  const [shipments, setShipments] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/shipments/', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
+        .then(res => res.json())
+        .then(data => setShipments(data));
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {

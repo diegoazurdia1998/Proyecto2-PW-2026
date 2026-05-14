@@ -10,22 +10,52 @@ export function Login() {
 
   const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
+    // 1. Validaciones básicas antes de enviar
     if (!formData.email || !formData.password) {
       setError("Por favor ingresá tu correo y contraseña");
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError("Credenciales incorrectas. Por favor verificá tu correo y contraseña.");
-      return;
-    }
+    try {
+      // 2. Petición real al backend
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
 
-    alert("Inicio de sesión exitoso");
-    window.location.href = "/mis-envios";
+      const data = await response.json();
+
+      if (response.ok) {
+        // 3. GUARDAR EN LOCALSTORAGE
+        // Guardamos el token para usarlo en el middleware de las rutas protegidas
+        localStorage.setItem('token', data.token);
+        // También es útil guardar el rol y el nombre para la interfaz
+        localStorage.setItem('userRole', data.role);
+        localStorage.setItem('userName', data.name);
+
+        alert("Inicio de sesión exitoso");
+
+        // 4. REDIRECCIÓN SEGÚN ROL (Requisito del enunciado)
+        // Si el usuario es administrador, lo mandamos al panel administrativo
+        if (data.role === 'admin') {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/mis-envios";
+        }
+      } else {
+        // Manejo de errores que vienen del backend
+        setError(data.message || "Credenciales incorrectas");
+      }
+    } catch (err) {
+      setError("No se pudo conectar con el servidor. Verificá que el backend esté corriendo.");
+    }
   };
 
   return (

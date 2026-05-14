@@ -9,18 +9,21 @@ export function AdminCRUD() {
   const [statusFilter, setStatusFilter] = useState("todos");
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const users = [
-    { id: 1, name: "Juan Pérez", email: "juan@ejemplo.com", phone: "+502 1234-5678", address: "Zona 10, Guatemala", role: "Cliente" },
-    { id: 2, name: "María López", email: "maria@ejemplo.com", phone: "+502 2345-6789", address: "Zona 1, Quetzaltenango", role: "Cliente" },
-    { id: 3, name: "Carlos Gómez", email: "carlos@ejemplo.com", phone: "+502 3456-7890", address: "Zona 5, Escuintla", role: "Cliente" }
-  ];
+  const [shipments, setShipments] = useState([]);
+  const token = localStorage.getItem('token');
 
-  const shipments = [
-    { code: "SKY123456789GT", client: "Juan Pérez", destination: "Quetzaltenango", status: "En Tránsito", date: "2026-05-05", cost: "Q 125.00" },
-    { code: "SKY987654321GT", client: "María López", destination: "Escuintla", status: "Entregado", date: "2026-05-03", cost: "Q 85.00" },
-    { code: "SKY456789123GT", client: "Carlos Gómez", destination: "Petén", status: "Pendiente", date: "2026-05-01", cost: "Q 250.00" },
-    { code: "SKY789123456GT", client: "Ana Rodríguez", destination: "Cobán", status: "En Tránsito", date: "2026-05-07", cost: "Q 180.00" }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      const headers = { 'Authorization': `Bearer ${token}` };
+      const [resUsers, resShipments] = await Promise.all([
+        fetch('http://localhost:5000/api/users/', { headers }),
+        fetch('http://localhost:5000/api/shipments/', { headers })
+      ]);
+      setUsers(await resUsers.json());
+      setShipments(await resShipments.json());
+    };
+    fetchData();
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -34,7 +37,15 @@ export function AdminCRUD() {
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
-
+  const handleDeleteUser = async (id) => {
+    if (confirm("¿Eliminar usuario?")) {
+      await fetch(`http://localhost:5000/api/users/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setUsers(users.filter(u => u.id !== id));
+    }
+  };
   const filteredShipments = shipments.filter(shipment => {
     const matchesSearch = shipment.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           shipment.client.toLowerCase().includes(searchQuery.toLowerCase());

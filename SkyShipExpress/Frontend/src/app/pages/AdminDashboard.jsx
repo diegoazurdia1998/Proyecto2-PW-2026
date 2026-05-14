@@ -1,31 +1,36 @@
 import { Link, useLocation } from "react-router";
 import { Package, Users, LogOut, LayoutDashboard, UserCog, PackageCheck, TrendingUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { useState, useEffect } from "react";
 
 export function AdminDashboard() {
   const location = useLocation();
 
-  const monthlyData = [
-    { month: "Ene", envios: 145 },
-    { month: "Feb", envios: 178 },
-    { month: "Mar", envios: 203 },
-    { month: "Abr", envios: 189 },
-    { month: "May", envios: 234 }
-  ];
+  const [stats, setStats] = useState({
+    totalShipments: 0,
+    monthlyShipments: 0,
+    totalUsers: 0,
+    estimatedRevenue: 0,
+    monthlyData: [],
+    departmentData: []
+  });
 
-  const departmentData = [
-    { name: "Guatemala", value: 450, color: "#00AEEF" },
-    { name: "Quetzaltenango", value: 280, color: "#1B2A4A" },
-    { name: "Escuintla", value: 180, color: "#3d5a8f" },
-    { name: "Huehuetenango", value: 120, color: "#66c2ff" },
-    { name: "Otros", value: 220, color: "#a3d9ff" }
-  ];
-
-  const recentActivity = [
-    { id: "SKY123456789GT", client: "María López", action: "Nuevo envío creado", time: "Hace 5 min" },
-    { id: "SKY987654321GT", client: "Carlos Pérez", action: "Envío entregado", time: "Hace 15 min" },
-    { id: "SKY456789123GT", client: "Ana Rodríguez", action: "En tránsito", time: "Hace 1 hora" }
-  ];
+  useEffect(() => {
+    const fetchStats = async () => {
+      const token = localStorage.getItem('token');
+      try {
+        const response = await fetch('http://localhost:5000/api/admin/stats', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        setStats(data);
+      } catch (error) {
+        console.error("Error cargando estadísticas:", error);
+      }
+    };
+    fetchStats();
+  }, []);
+  
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">

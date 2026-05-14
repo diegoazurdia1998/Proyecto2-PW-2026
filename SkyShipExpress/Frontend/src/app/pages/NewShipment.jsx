@@ -43,10 +43,33 @@ export function NewShipment() {
     return cost.toFixed(2);
   };
 
- const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Envío generado con éxito. Código de guía: SKY" + Math.floor(Math.random() * 1000000000) + "GT");
-    window.location.href = "/mis-envios";
+    const token = localStorage.getItem('token');
+
+    const response = await fetch('http://localhost:5000/api/shipments/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        origin: formData.origin,
+        destination: formData.destination,
+        recipient_name: formData.recipient_name, // Mapeo a snake_case del modelo
+        recipient_address: formData.recipientAddress,
+        recipient_phone: formData.recipientPhone,
+        weight: parseFloat(formData.weight),
+        package_type: formData.packageType,
+        cost: calculateCost()
+      })
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      alert(`Envío generado. Código: ${result.code}`);
+      window.location.href = "/mis-envios";
+    }
   };
 
   return (

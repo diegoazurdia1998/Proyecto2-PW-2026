@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from app.controllers.user_controller import get_all_users, update_user_info, delete_user_account
+from app.controllers.user_controller import get_all_users, update_user_info #, delete_user_account
 from app.middleware.auth_middleware import token_required
 
 user_bp = Blueprint('users', __name__)
