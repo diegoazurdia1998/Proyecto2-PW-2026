@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router";
 import { Home } from "./app/pages/Home";
-import { About } from "./app/pages/About";      // ← agregar
+import { About } from "./app/pages/About";
 import { Login } from "./app/pages/Login";
 import { Register } from "./app/pages/Register";
 import { Contact } from "./app/pages/Contact";

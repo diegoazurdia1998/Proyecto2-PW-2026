@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { Link, useLocation } from "react-router";
 import { Package, LogOut, LayoutDashboard, UserCog, Search, Pencil, Trash2, Plus } from "lucide-react";
 
@@ -9,15 +9,23 @@ export function AdminCRUD() {
   const [statusFilter, setStatusFilter] = useState("todos");
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [editingShip, setEditingShip] = useState(null);
   const [shipments, setShipments] = useState([]);
+  const [users, setUsers] = useState([]);
   const token = localStorage.getItem('token');
+
+  const [user] = useState({
+    name: localStorage.getItem("userName") || "",
+    role: localStorage.getItem("userRole") || "",
+    token: localStorage.getItem("token") || ""
+  });
 
   useEffect(() => {
     const fetchData = async () => {
       const headers = { 'Authorization': `Bearer ${token}` };
       const [resUsers, resShipments] = await Promise.all([
-        fetch('http://localhost:5000/api/users/', { headers }),
-        fetch('http://localhost:5000/api/shipments/', { headers })
+        fetch('http://127.0.0.1:5000/api/users/all', { headers }),
+        fetch('http://127.0.0.1:5000/api/shipments/list', { headers })
       ]);
       setUsers(await resUsers.json());
       setShipments(await resShipments.json());
@@ -39,20 +47,105 @@ export function AdminCRUD() {
   };
   const handleDeleteUser = async (id) => {
     if (confirm("¿Eliminar usuario?")) {
-      await fetch(`http://localhost:5000/api/users/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      await fetch(`http://127.0.0.1:5000/api/users/delete?id=${id}`, {
+        headers: { Authorization: `Bearer ${user.token}`}});
       setUsers(users.filter(u => u.id !== id));
     }
   };
+
+  const handleUpdateUser = async (id, user_data) => {
+    // Pedimos nuevos valores (reemplaza por modal si prefieres)
+    const current = users.find(u => u.id === id);
+    if (!current) {
+      alert("Usuario no encontrado en la lista");
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/api/users/update?id=${id}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${user.token}`,'Content-Type': 'application/json' },
+        body: JSON.stringify(user_data)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || "No se pudo actualizar el usuario");
+        return;
+      }
+
+      const data = await res.json().catch(() => ({}));
+      // Si el backend devuelve el usuario actualizado, úsalo; si no, actualiza manualmente
+      if (data.user) {
+        setUsers(prev => prev.map(u => (u.id === id ? data.user : u)));
+      } else {
+        setUsers(prev => prev.map(u => (u.id === id ? user_data : u)));
+      }
+
+      alert(data.message || "Usuario actualizado");
+    } catch (err) {
+      console.error("Update user error:", err);
+      alert("Error al actualizar usuario");
+    }
+    setEditingUser(null);
+  };
+
+  const handleDeleteShipment = async (id) => {
+    if (confirm("¿Eliminar envio?")) {
+      await fetch(`http://127.0.0.1:5000/api/shipments/remove?id=${id}`, {
+        headers: { Authorization: `Bearer ${user.token}`}});
+      setShipments(shipments.filter(s => s.id !== id));
+    }
+  };
+
+  const handleUpdateShipment = async (id, shipment_data) => {
+
+    const current = shipments.find(s => s.id === id);
+    if (!current) {
+      alert("Envio no encontrado en la lista");
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/api/shipments/edit?id=${id}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${user.token}`,'Content-Type': 'application/json' },
+        body: JSON.stringify(shipment_data)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || "No se pudo actualizar el envio");
+        return;
+      }
+
+      const data = await res.json().catch(() => ({}));
+      // Si el backend devuelve el envio actualizado, úsalo; si no, actualiza manualmente
+      if (data.user) {
+        setUsers(prev => prev.map(u => (u.id === id ? data.user : u)));
+      } else {
+        setUsers(prev => prev.map(u => (u.id === id ? shipment_data : u)));
+      }
+
+      alert(data.message || "Envio actualizado");
+    } catch (err) {
+      console.error("Update shipment error:", err);
+      alert("Error al actualizar envio");
+    }
+    setEditingShip(null);
+  };
+
   const filteredShipments = shipments.filter(shipment => {
     const matchesSearch = shipment.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           shipment.client.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "todos" || shipment.status.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
-
+  const getInitials = (fullName) => {
+    if (!fullName) return "U";
+    const parts = fullName.trim().split(/\s+/);
+    return parts.slice(0, 2).map(p => p[0]?.toUpperCase() || "").join("") || "U";
+  };
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       <nav className="bg-white border-b border-gray-200">
@@ -68,10 +161,10 @@ export function AdminCRUD() {
               Admin
             </div>
             <div className="w-10 h-10 rounded-full bg-[#1B2A4A] flex items-center justify-center text-white font-bold">
-              AD
+              {getInitials(user.name)}
             </div>
             <div>
-              <div className="text-sm font-medium text-[#1B2A4A]">Administrador</div>
+              <div className="text-sm font-medium text-[#1B2A4A]">{user.name}</div>
               <div className="text-xs text-gray-500">admin@skyship.com.gt</div>
             </div>
           </div>
@@ -150,16 +243,8 @@ export function AdminCRUD() {
                     className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
                   />
                 </div>
-                <button
-                  onClick={() => {
-                    setEditingUser({ id: null, name: "", email: "", phone: "", address: "", role: "Cliente" });
-                    setShowEditModal(true);
-                  }}
-                  className="px-6 py-2 bg-[#00AEEF] text-white rounded-lg hover:bg-[#0098d1] transition-colors flex items-center gap-2"
-                >
-                  <Plus className="w-5 h-5" />
-                  Agregar Usuario
-                </button>
+
+
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -190,12 +275,14 @@ export function AdminCRUD() {
                               onClick={() => {
                                 setEditingUser(user);
                                 setShowEditModal(true);
+
                               }}
                               className="p-2 text-[#00AEEF] hover:bg-[#00AEEF]/10 rounded-lg transition-colors"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
-                            <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                            <button onClick={() => handleDeleteUser(user.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -252,24 +339,24 @@ export function AdminCRUD() {
                         <td className="px-6 py-4 font-mono text-sm text-[#00AEEF]">{shipment.code}</td>
                         <td className="px-6 py-4 text-[#2D2D2D]">{shipment.client}</td>
                         <td className="px-6 py-4 text-[#2D2D2D]">{shipment.destination}</td>
-                        <td className="px-6 py-4">
-                          <select
-                            defaultValue={shipment.status}
-                            className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(shipment.status)} bg-transparent focus:outline-none`}
-                          >
-                            <option value="Pendiente">Pendiente</option>
-                            <option value="En Tránsito">En Tránsito</option>
-                            <option value="Entregado">Entregado</option>
-                          </select>
-                        </td>
+                        <td className="px-6 py-4 text-[#2D2D2D] ">{shipment.status}</td>
+
                         <td className="px-6 py-4 text-[#2D2D2D]">{shipment.date}</td>
                         <td className="px-6 py-4 font-medium text-[#1B2A4A]">{shipment.cost}</td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
-                            <button className="p-2 text-[#00AEEF] hover:bg-[#00AEEF]/10 rounded-lg transition-colors">
+                            <button onClick={() => {
+                              setEditingShip(shipment);
+                              setShowEditModal(true);
+
+                            }}
+                                className="p-2 text-[#00AEEF] hover:bg-[#00AEEF]/10 rounded-lg transition-colors">
+
                               <Pencil className="w-4 h-4" />
                             </button>
-                            <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                            <button onClick={() => handleDeleteShipment(shipment.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -284,60 +371,105 @@ export function AdminCRUD() {
         </main>
       </div>
 
+
+
       {showEditModal && editingUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold text-[#1B2A4A] mb-4">
-              {editingUser.id ? "Editar Usuario" : "Agregar Usuario"}
-            </h2>
-            <form className="space-y-4">
-              <div>
-                <label className="block text-sm text-[#2D2D2D] mb-2">Nombre</label>
-                <input
-                  type="text"
-                  defaultValue={editingUser.name}
-                  className="w-full px-4 py-2 bg-[#F7F8FA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-[#2D2D2D] mb-2">Correo</label>
-                <input
-                  type="email"
-                  defaultValue={editingUser.email}
-                  className="w-full px-4 py-2 bg-[#F7F8FA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-[#2D2D2D] mb-2">Teléfono</label>
-                <input
-                  type="tel"
-                  defaultValue={editingUser.phone}
-                  className="w-full px-4 py-2 bg-[#F7F8FA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                />
-              </div>
-              <div className="flex gap-3 pt-2">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 max-w-2xl w-full shadow-lg">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <h2 className="text-xl font-bold text-[#1B2A4A]">
+                  {editingUser.id ? "Editar Usuario" : "Agregar Usuario"}
+                </h2>
                 <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 text-[#2D2D2D] rounded-lg hover:bg-[#F7F8FA] transition-colors"
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="text-gray-400 hover:text-gray-600 p-2 rounded-md"
+                    aria-label="Cerrar"
                 >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert("Usuario guardado con éxito");
-                    setShowEditModal(false);
-                  }}
-                  className="flex-1 px-4 py-2 bg-[#00AEEF] text-white rounded-lg hover:bg-[#0098d1] transition-colors"
-                >
-                  Guardar
+                  ✕
                 </button>
               </div>
-            </form>
+
+              <form className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#2D2D2D] mb-2">Nombre completo</label>
+                    <input
+                        type="text"
+                        defaultValue={editingUser.name}
+                        onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                        className="w-full px-4 py-2 bg-[#F7F8FA] rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#2D2D2D] mb-2">Correo electrónico</label>
+                    <input
+                        type="email"
+                        defaultValue={editingUser.email}
+                        onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                        className="w-full px-4 py-2 bg-[#F7F8FA] rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#2D2D2D] mb-2">Teléfono</label>
+                    <input
+                        type="tel"
+                        defaultValue={editingUser.phone}
+                        onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
+                        className="w-full px-4 py-2 bg-[#F7F8FA] rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#2D2D2D] mb-2">Dirección</label>
+                    <input
+                        type="text"
+                        defaultValue={editingUser.address}
+                        onChange={(e) => setEditingUser({ ...editingUser, address: e.target.value })}
+                        className="w-full px-4 py-2 bg-[#F7F8FA] rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#2D2D2D] mb-2">Rol</label>
+                    <select
+                        defaultValue={editingUser.role}
+                        onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                        className="w-full px-4 py-2 bg-[#F7F8FA] rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+                    >
+                      <option value="Cliente">Cliente</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+
+                </div>
+
+                <div className="pt-2 flex justify-end gap-3">
+                  <button
+                      type="button"
+                      onClick={() => setShowEditModal(false)}
+                      className="px-4 py-2 border border-gray-200 text-[#2D2D2D] rounded-lg hover:bg-[#F7F8FA] transition-colors"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                      type="submit"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleUpdateUser(editingUser.id, editingUser);
+                        setShowEditModal(false)
+                      }}
+                      className="px-4 py-2 bg-[#00AEEF] text-white rounded-lg hover:bg-[#0098d1] transition-colors"
+                  >
+                    Guardar cambios
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
       )}
     </div>
   );

@@ -8,17 +8,23 @@ export function NewShipment() {
   const [formData, setFormData] = useState({
     origin: "",
     destination: "",
-    recipientName: "",
-    recipientAddress: "",
-    recipientPhone: "",
+    recipient_name: "",
+    recipient_address: "",
+    recipient_phone: "",
     length: "",
     width: "",
     height: "",
     weight: "",
-    packageType: "",
+    package_type: "",
     insurance: false,
     urgent: false,
     pickup: false
+  });
+
+  const [user] = useState({
+    name: localStorage.getItem("userName") || "",
+    role: localStorage.getItem("userRole") || "",
+    token: localStorage.getItem("token") || ""
   });
 
   const cities = [
@@ -47,7 +53,7 @@ export function NewShipment() {
     e.preventDefault();
     const token = localStorage.getItem('token');
 
-    const response = await fetch('http://localhost:5000/api/shipments/', {
+    const response = await fetch('http://127.0.0.1:5000/api/shipments/new', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -57,10 +63,10 @@ export function NewShipment() {
         origin: formData.origin,
         destination: formData.destination,
         recipient_name: formData.recipient_name, // Mapeo a snake_case del modelo
-        recipient_address: formData.recipientAddress,
-        recipient_phone: formData.recipientPhone,
+        recipient_address: formData.recipient_address,
+        recipient_phone: formData.recipient_phone,
         weight: parseFloat(formData.weight),
-        package_type: formData.packageType,
+        package_type: formData.package_type,
         cost: calculateCost()
       })
     });
@@ -71,7 +77,12 @@ export function NewShipment() {
       window.location.href = "/mis-envios";
     }
   };
-
+// Obtener iniciales a partir del nombre
+  const getInitials = (fullName) => {
+    if (!fullName) return "U";
+    const parts = fullName.trim().split(/\s+/);
+    return parts.slice(0, 2).map(p => p[0]?.toUpperCase() || "").join("") || "U";
+  };
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       <nav className="bg-white border-b border-gray-200">
@@ -84,11 +95,11 @@ export function NewShipment() {
           </div>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#00AEEF] flex items-center justify-center text-white font-bold">
-              JP
+              {getInitials(user.name)}
             </div>
             <div>
-              <div className="text-sm font-medium text-[#1B2A4A]">Juan Pérez</div>
-              <div className="text-xs text-gray-500">Cliente</div>
+              <div className="text-sm font-medium text-[#1B2A4A]">{user.name}</div>
+              <div className="text-xs text-gray-500">{user.role}</div>
             </div>
           </div>
         </div>
@@ -179,8 +190,8 @@ export function NewShipment() {
                 <label className="block text-sm text-[#2D2D2D] mb-2">Nombre del destinatario</label>
                 <input
                   type="text"
-                  value={formData.recipientName}
-                  onChange={(e) => setFormData({ ...formData, recipientName: e.target.value })}
+                  value={formData.recipient_name}
+                  onChange={(e) => setFormData({ ...formData, recipient_name: e.target.value })}
                   className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
                   placeholder="Nombre completo"
                   required
@@ -191,8 +202,8 @@ export function NewShipment() {
                 <label className="block text-sm text-[#2D2D2D] mb-2">Dirección de entrega</label>
                 <input
                   type="text"
-                  value={formData.recipientAddress}
-                  onChange={(e) => setFormData({ ...formData, recipientAddress: e.target.value })}
+                  value={formData.recipient_address}
+                  onChange={(e) => setFormData({ ...formData, recipient_address: e.target.value })}
                   className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
                   placeholder="Zona, Municipio, Departamento"
                   required
@@ -203,8 +214,8 @@ export function NewShipment() {
                 <label className="block text-sm text-[#2D2D2D] mb-2">Teléfono del destinatario</label>
                 <input
                   type="tel"
-                  value={formData.recipientPhone}
-                  onChange={(e) => setFormData({ ...formData, recipientPhone: e.target.value })}
+                  value={formData.recipient_phone}
+                  onChange={(e) => setFormData({ ...formData, recipient_phone: e.target.value })}
                   className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
                   placeholder="+502 1234-5678"
                   required
@@ -262,8 +273,8 @@ export function NewShipment() {
               <div>
                 <label className="block text-sm text-[#2D2D2D] mb-2">Tipo de paquete</label>
                 <select
-                  value={formData.packageType}
-                  onChange={(e) => setFormData({ ...formData, packageType: e.target.value })}
+                  value={formData.package_type}
+                  onChange={(e) => setFormData({ ...formData, package_type: e.target.value })}
                   className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
                   required
                 >

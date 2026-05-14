@@ -15,7 +15,7 @@ def token_required(f):
             return jsonify({'message': 'Token no proporcionado'}), 401
 
         try:
-            # Reemplaza 'tu_clave_secreta' por tu variable de entorno
+
             data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
             current_user = User.query.get(data['id'])
             if not current_user:

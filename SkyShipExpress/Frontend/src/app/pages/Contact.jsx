@@ -35,7 +35,7 @@ export function Contact() {
       setFormData({ name: "", email: "", subject: "", message: "" });
     }
 
-    const response = fetch('http://localhost:5000/api/contact/', {
+    const response = fetch('http://127.0.0.1:5000/api/contact/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
