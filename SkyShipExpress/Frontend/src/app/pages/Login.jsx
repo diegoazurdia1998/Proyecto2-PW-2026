@@ -40,7 +40,7 @@ export function Login() {
         localStorage.setItem('userRole', data.role);
         localStorage.setItem('userName', data.name);
 
-        alert("Inicio de sesión exitoso");
+        //alert("Inicio de sesión exitoso");
 
         // 4. REDIRECCIÓN SEGÚN ROL (Requisito del enunciado)
         // Si el usuario es administrador, lo mandamos al panel administrativo

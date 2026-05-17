@@ -215,7 +215,7 @@ export function Register() {
                           isConfirmPasswordValid && touched.confirmPassword ? 'ring-2 ring-green-500' :
                               'focus:ring-[#00AEEF]'
                   }`}
-                  placeholder="Repetí tu contraseña"
+                  placeholder="Repite tu contraseña"
               />
               {errors.confirmPassword && touched.confirmPassword && (
                   <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -233,7 +233,7 @@ export function Register() {
 
             <button
                 type="submit"
-                disabled={loading}
+                onClick={() => { localStorage.clear(); window.location.href = "/"; }}
                 className="w-full px-8 py-3 bg-[#00AEEF] text-white rounded-lg hover:bg-[#0098d1] transition-colors disabled:opacity-50"
             >
               {loading ? "Registrando..." : "Crear Cuenta"}

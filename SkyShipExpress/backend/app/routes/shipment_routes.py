@@ -27,7 +27,7 @@ def edit_shipment(current_user):
     shipment_id = request.args.get('id', type=int)
     if not shipment_id:
         return jsonify({"message": "Falta id"}), 400
-    return update_shipment(shipment_id)
+    return update_shipment(shipment_id, current_user)
 
 @shipment_bp.route('/remove', methods=['GET'])
 @token_required

@@ -34,3 +34,12 @@ def handle_contact():
 
     # Commit exitoso: opcionalmente devolver el id asignado
     return jsonify({"message": "Mensaje guardado con éxito", "contact_id": new_message.id}), 201
+
+def recent_contacts():
+    try:
+        contacts = Contact.query.all()
+
+        return jsonify([s.to_dict() for s in contacts]), 200
+    except SQLAlchemyError as e:
+        logger.error("Error al obtener contactos", exc_info=e)
+        return jsonify({"message": "No se pudieron obtener los contactos. Intente más tarde."}), 500

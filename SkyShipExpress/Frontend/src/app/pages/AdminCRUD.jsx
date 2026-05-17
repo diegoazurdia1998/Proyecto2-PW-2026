@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import { Link, useLocation } from "react-router";
-import { Package, LogOut, LayoutDashboard, UserCog, Search, Pencil, Trash2, Plus } from "lucide-react";
+import { Package, LogOut, LayoutDashboard, UserCog, Search, Pencil, Trash2} from "lucide-react";
 
 export function AdminCRUD() {
   const location = useLocation();
@@ -33,18 +33,7 @@ export function AdminCRUD() {
     fetchData();
   }, []);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Pendiente":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "En Tránsito":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "Entregado":
-        return "bg-green-100 text-green-800 border-green-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
+
   const handleDeleteUser = async (id) => {
     if (confirm("¿Eliminar usuario?")) {
       await fetch(`http://127.0.0.1:5000/api/users/delete?id=${id}`, {
@@ -122,9 +111,9 @@ export function AdminCRUD() {
       const data = await res.json().catch(() => ({}));
       // Si el backend devuelve el envio actualizado, úsalo; si no, actualiza manualmente
       if (data.user) {
-        setUsers(prev => prev.map(u => (u.id === id ? data.user : u)));
+        setShipments(prev => prev.map(u => (u.id === id ? data.user : u)));
       } else {
-        setUsers(prev => prev.map(u => (u.id === id ? shipment_data : u)));
+        setShipments(prev => prev.map(u => (u.id === id ? shipment_data : u)));
       }
 
       alert(data.message || "Envio actualizado");
@@ -234,19 +223,6 @@ export function AdminCRUD() {
 
           {activeTab === "usuarios" && (
             <div>
-              <div className="flex items-center justify-between mb-6">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Buscar usuarios..."
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                  />
-                </div>
-
-
-              </div>
-
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-[#F7F8FA]">
@@ -298,16 +274,7 @@ export function AdminCRUD() {
           {activeTab === "envios" && (
             <div>
               <div className="flex items-center gap-4 mb-6">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Buscar envíos..."
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                  />
-                </div>
+
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -325,7 +292,7 @@ export function AdminCRUD() {
                   <thead className="bg-[#F7F8FA]">
                     <tr>
                       <th className="text-left px-6 py-4 text-sm font-medium text-[#2D2D2D]">Código Guía</th>
-                      <th className="text-left px-6 py-4 text-sm font-medium text-[#2D2D2D]">Cliente</th>
+                      <th className="text-left px-6 py-4 text-sm font-medium text-[#2D2D2D]">Origen</th>
                       <th className="text-left px-6 py-4 text-sm font-medium text-[#2D2D2D]">Destino</th>
                       <th className="text-left px-6 py-4 text-sm font-medium text-[#2D2D2D]">Estado</th>
                       <th className="text-left px-6 py-4 text-sm font-medium text-[#2D2D2D]">Fecha</th>
@@ -337,11 +304,11 @@ export function AdminCRUD() {
                     {filteredShipments.map((shipment, index) => (
                       <tr key={index} className="border-t border-gray-200 hover:bg-[#F7F8FA] transition-colors">
                         <td className="px-6 py-4 font-mono text-sm text-[#00AEEF]">{shipment.code}</td>
-                        <td className="px-6 py-4 text-[#2D2D2D]">{shipment.client}</td>
+                        <td className="px-6 py-4 text-[#2D2D2D]">{shipment.origin}</td>
                         <td className="px-6 py-4 text-[#2D2D2D]">{shipment.destination}</td>
                         <td className="px-6 py-4 text-[#2D2D2D] ">{shipment.status}</td>
 
-                        <td className="px-6 py-4 text-[#2D2D2D]">{shipment.date}</td>
+                        <td className="px-6 py-4 text-[#2D2D2D]">{shipment.created_at}</td>
                         <td className="px-6 py-4 font-medium text-[#1B2A4A]">{shipment.cost}</td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
@@ -371,7 +338,58 @@ export function AdminCRUD() {
         </main>
       </div>
 
+      {showEditModal && editingShip && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 max-w-2xl w-full shadow-lg">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <h2 className="text-xl font-bold text-[#1B2A4A]">
+                  Editar Envio
+                </h2>
+                <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="text-gray-400 hover:text-gray-600 p-2 rounded-md"
+                    aria-label="Cerrar"
+                >
+                  ✕
+                </button>
+                <div>
+                  <label className="block text-sm font-medium text-[#2D2D2D] mb-2">Estado</label>
+                  <select
+                      defaultValue={editingShip.status}
+                      onChange={(e) => setEditingShip({ ...editingShip, status: e.target.value })}
+                      className="w-full px-4 py-2 bg-[#F7F8FA] rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+                  >
+                    <option value="Entregado">Entregado</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="En tránsito">En tránsito</option>
+                  </select>
+                </div>
+                <div className="pt-2 flex justify-end gap-3">
+                  <button
+                      type="button"
+                      onClick={() => setShowEditModal(false)}
+                      className="px-4 py-2 border border-gray-200 text-[#2D2D2D] rounded-lg hover:bg-[#F7F8FA] transition-colors"
+                  >
+                    Cancelar
+                  </button>
 
+                  <button
+                      type="submit"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleUpdateShipment(editingShip.id, editingShip);
+                        setShowEditModal(false)
+                      }}
+                      className="px-4 py-2 bg-[#00AEEF] text-white rounded-lg hover:bg-[#0098d1] transition-colors"
+                  >
+                    Guardar cambios
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+                )}
 
       {showEditModal && editingUser && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

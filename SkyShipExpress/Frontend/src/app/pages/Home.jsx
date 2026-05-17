@@ -20,44 +20,11 @@ export function Home() {
             <p className="text-xl text-gray-200 mb-8">
               La solución de paquetería más confiable de Guatemala
             </p>
-            <div className="flex gap-4">
-              <Link
-                to="/nuevo-envio"
-                className="px-8 py-3 bg-[#00AEEF] text-white rounded-lg hover:bg-[#0098d1] transition-colors"
-              >
-                Cotizar Envío
-              </Link>
-              <Link
-                to="/registrarse"
-                className="px-8 py-3 border-2 border-white text-white rounded-lg hover:bg-white hover:text-[#1B2A4A] transition-colors"
-              >
-                Registrarse
-              </Link>
-            </div>
+
           </div>
         </div>
       </section>
 
-      <section className="max-w-[1200px] mx-auto px-8 -mt-12">
-        <div className="bg-white rounded-xl shadow-lg p-6 flex gap-4 items-center">
-          <div className="flex-1">
-            <label className="block text-sm text-[#2D2D2D] mb-2">
-              Ingresa tu código de guía
-            </label>
-            <input
-              type="text"
-              value={trackingCode}
-              onChange={(e) => setTrackingCode(e.target.value)}
-              placeholder="Ej: SKY123456789GT"
-              className="w-full px-4 py-3 bg-[#F7F8FA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-            />
-          </div>
-          <button className="px-8 py-3 bg-[#00AEEF] text-white rounded-lg hover:bg-[#0098d1] transition-colors flex items-center gap-2 mt-6">
-            <Search className="w-5 h-5" />
-            Rastrear
-          </button>
-        </div>
-      </section>
 
       <section className="max-w-[1200px] mx-auto px-8 py-20">
         <div className="grid grid-cols-4 gap-6">

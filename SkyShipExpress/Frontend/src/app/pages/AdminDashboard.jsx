@@ -39,7 +39,7 @@ export function AdminDashboard() {
 
   const [shipments, setShipments] = useState([]);
   const [users, setUsers] = useState([]);
-  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingStats ,setLoadingStats] = useState(true);
   const [loadingLists, setLoadingLists] = useState(true);
   const [serverError, setServerError] = useState("");
 
@@ -129,6 +129,7 @@ export function AdminDashboard() {
 
         const rShip = await fetchWithToken("http://127.0.0.1:5000/api/shipments/list", { signal })
         const rUsers = await fetchWithToken("http://127.0.0.1:5000/api/users/all", { signal })
+
         console.log("rShip: "+rShip.status,"rUsers: "+rUsers.status);
         if (signal.aborted) return;
 
@@ -155,6 +156,7 @@ export function AdminDashboard() {
           console.log(dataUsers);
           if (mountedRef.current) setUsers(Array.isArray(dataUsers) ? dataUsers : []);
         }
+
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Error fetch lists:", err);
@@ -315,7 +317,7 @@ export function AdminDashboard() {
                   </div>
                   <span className="text-sm text-[#2D2D2D]">Ingresos Estimados</span>
                 </div>
-                <div className="text-3xl font-bold text-[#1B2A4A]">Q {stats.estimatedRevenue ?? 0}</div>
+                <div className="text-3xl font-bold text-[#1B2A4A]">{stats.estimatedRevenue ?? 0}</div>
               </div>
             </div>
 
@@ -369,6 +371,7 @@ export function AdminDashboard() {
                         <div className="font-mono text-sm text-[#00AEEF]">{activity.id}</div>
                         <div className="text-sm text-[#2D2D2D]"><span className="font-medium">{activity.client}</span> - {activity.action}</div>
                       </div>
+                      <div className="text-sm text-gray-500">{activity.email}</div>
                       <div className="text-sm text-gray-500">{activity.time}</div>
                     </div>
                 ))}
@@ -388,7 +391,6 @@ export function AdminDashboard() {
                         <th className="px-4 py-3 text-sm">Nombre</th>
                         <th className="px-4 py-3 text-sm">Email</th>
                         <th className="px-4 py-3 text-sm">Rol</th>
-                        <th className="px-4 py-3 text-sm">Acciones</th>
                       </tr>
                       </thead>
                       <tbody>
@@ -398,11 +400,7 @@ export function AdminDashboard() {
                             <td className="px-4 py-3">{u.name}</td>
                             <td className="px-4 py-3">{u.email}</td>
                             <td className="px-4 py-3">{u.role}</td>
-                            <td className="px-4 py-3">
-                              <button onClick={() => handleDeleteUser(u.id)} className="text-red-600 hover:underline flex items-center gap-2">
-                                <Trash2 className="w-4 h-4" /> Eliminar
-                              </button>
-                            </td>
+
                           </tr>
                       ))}
                       </tbody>
@@ -424,7 +422,6 @@ export function AdminDashboard() {
                         <th className="px-4 py-3 text-sm">Destino</th>
                         <th className="px-4 py-3 text-sm">Fecha</th>
                         <th className="px-4 py-3 text-sm">Estado</th>
-                        <th className="px-4 py-3 text-sm">Acciones</th>
                       </tr>
                       </thead>
                       <tbody>
@@ -434,11 +431,7 @@ export function AdminDashboard() {
                             <td className="px-4 py-3">{s.destination}</td>
                             <td className="px-4 py-3">{formatDate(s.created_at || s.date)}</td>
                             <td className="px-4 py-3">{s.status}</td>
-                            <td className="px-4 py-3">
-                              <button onClick={() => handleDeleteShipment(s.id)} className="text-red-600 hover:underline flex items-center gap-2">
-                                <Trash2 className="w-4 h-4" /> Eliminar
-                              </button>
-                            </td>
+
                           </tr>
                       ))}
                       </tbody>
