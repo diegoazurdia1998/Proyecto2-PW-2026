@@ -141,9 +141,7 @@ export function ClientDashboard()
               <Link to="/nuevo-envio" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${location.pathname === "/nuevo-envio" ? "bg-[#00AEEF] text-white" : "text-[#2D2D2D] hover:bg-[#F7F8FA]"}`}>
                 <Plus className="w-5 h-5" /> Nuevo Envío
               </Link>
-              <a href="#" className="flex items-center gap-3 px-4 py-3 rounded-lg text-[#2D2D2D] hover:bg-[#F7F8FA]">
-                <User className="w-5 h-5" /> Mi Perfil
-              </a>
+
               <button onClick={handleLogout} className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
                 <LogOut className="w-5 h-5" /> Cerrar Sesión
               </button>

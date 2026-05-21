@@ -79,6 +79,12 @@ def get_admin_stats():
             "value": count,
             "color": colors[idx % len(colors)]
         })
+    # Envíos de este mes
+    now = datetime.now()
+    shipments_this_month = db.session.query(func.count(Shipment.id)) \
+                               .filter(extract('year', Shipment.created_at) == now.year) \
+                               .filter(extract('month', Shipment.created_at) == now.month) \
+                               .scalar() or 0
 
     return jsonify({
         "totalShipments": total_shipments,
@@ -86,7 +92,8 @@ def get_admin_stats():
         "estimatedRevenue": f"Q {total_revenue:,.2f}",
         "monthlyData": monthly_data,
         "departmentData": department_data,
-        "recentActivity": recent_activity
+        "recentActivity": recent_activity,
+        "monthlyShipments": shipments_this_month
     }), 200
 
 def delete_user(user_id):

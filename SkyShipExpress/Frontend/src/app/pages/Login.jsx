@@ -101,11 +101,7 @@ export function Login() {
             />
           </div>
 
-          <div className="text-right">
-            <a href="#" className="text-sm text-[#00AEEF] hover:underline">
-              ¿Olvidaste tu contraseña?
-            </a>
-          </div>
+
 
           <button
             type="submit"
@@ -113,6 +109,12 @@ export function Login() {
           >
             Iniciar Sesión
           </button>
+
+          <div className="text-right">
+            <a href="/" className="text-sm text-[#00AEEF] hover:underline">
+              Regresar al inicio
+            </a>
+          </div>
         </form>
 
         <div className="mt-6 pt-6 border-t border-gray-200">

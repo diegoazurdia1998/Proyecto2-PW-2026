@@ -4,7 +4,7 @@ import { Package, Plus, User, LogOut, Calculator } from "lucide-react";
 
 export function NewShipment() {
   const location = useLocation();
-
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     origin: "",
     destination: "",
@@ -41,13 +41,33 @@ export function NewShipment() {
   ];
 
   const calculateCost = () => {
-    if (!formData.weight) return 0;
-    let cost = parseFloat(formData.weight) * 15;
-    if (formData.insurance) cost += 25;
-    if (formData.urgent) cost += 50;
-    if (formData.pickup) cost += 30;
+    const { length, width, height, weight, insurance, urgent, pickup } = formData;
+
+    // Si no hay datos, costo 0
+    if (!weight && (!length || !width || !height)) return 0;
+
+    // Costo por peso
+    const weightCost = weight ? parseFloat(weight) * 15 : 0;
+
+    // Costo por volumen (ejemplo: 6000 cm³ = 1 kg equivalente)
+    let volumeCost = 0;
+    if (length && width && height) {
+      const volume = length * width * height; // cm³
+      const volumetricWeight = volume / 6000; // factor de conversión
+      volumeCost = volumetricWeight * 15;
+    }
+
+    // Tomar el mayor entre peso y volumen
+    let cost = Math.max(weightCost, volumeCost);
+
+    // Extras
+    if (insurance) cost += 25;
+    if (urgent) cost += 50;
+    if (pickup) cost += 30;
+
     return cost.toFixed(2);
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -82,6 +102,16 @@ export function NewShipment() {
     if (!fullName) return "U";
     const parts = fullName.trim().split(/\s+/);
     return parts.slice(0, 2).map(p => p[0]?.toUpperCase() || "").join("") || "U";
+  };
+  // Función para calcular tipo de paquete
+  const calcularTipoPaquete = (largo, ancho, alto) => {
+    const volumen = largo * ancho * alto; // cm³
+
+    if (volumen <= 1000) return "sobre";            // Ejemplo: sobres pequeños
+    if (volumen <= 10000) return "caja-pequena";    // hasta 10 mil cm³
+    if (volumen <= 30000) return "caja-mediana";    // hasta 30 mil cm³
+    if (volumen <= 60000) return "caja-grande";     // hasta 60 mil cm³
+    return "carga";                                 // más grande
   };
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
@@ -130,13 +160,7 @@ export function NewShipment() {
               <Plus className="w-5 h-5" />
               Nuevo Envío
             </Link>
-            <a
-              href="#"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-[#2D2D2D] hover:bg-[#F7F8FA] transition-colors"
-            >
-              <User className="w-5 h-5" />
-              Mi Perfil
-            </a>
+
             <Link
               to="/"
               className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
@@ -189,37 +213,104 @@ export function NewShipment() {
               <div>
                 <label className="block text-sm text-[#2D2D2D] mb-2">Nombre del destinatario</label>
                 <input
-                  type="text"
-                  value={formData.recipient_name}
-                  onChange={(e) => setFormData({ ...formData, recipient_name: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                  placeholder="Nombre completo"
-                  required
+                    type="text"
+                    value={formData.recipient_name}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, recipient_name: value });
+
+                      // Validaciones
+                      if (!value.trim()) {
+                        setError({ ...error, recipient_name: "El nombre no puede estar vacío" });
+                      } else if (value.trim().length < 5) {
+                        setError({ ...error, recipient_name: "Debe tener al menos 5 caracteres" });
+                      } else if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(value)) {
+                        setError({ ...error, recipient_name: "Solo se permiten letras y espacios" });
+                      } else if (value.trim().split(" ").length < 2) {
+                        setError({ ...error, recipient_name: "Debe incluir al menos nombre y apellido" });
+                      } else {
+                        setError({ ...error, recipient_name: null });
+                      }
+                    }}
+                    className={`w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 ${
+                        error.recipient_name ? 'ring-2 ring-red-500' : 'focus:ring-[#00AEEF]'
+                    }`}
+                    placeholder="Nombre completo"
+                    required
                 />
+                {error.recipient_name && (
+                    <p className="text-red-500 text-sm mt-1">{error.recipient_name}</p>
+                )}
+
               </div>
 
               <div>
                 <label className="block text-sm text-[#2D2D2D] mb-2">Dirección de entrega</label>
                 <input
-                  type="text"
-                  value={formData.recipient_address}
-                  onChange={(e) => setFormData({ ...formData, recipient_address: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                  placeholder="Zona, Municipio, Departamento"
-                  required
+                    type="text"
+                    value={formData.recipient_address}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, recipient_address: value });
+
+                      // Validaciones
+                      if (!value.trim()) {
+                        setError({ ...error, recipient_address: "La dirección no puede estar vacía" });
+                      } else if (value.trim().length < 5) {
+                        setError({ ...error, recipient_address: "Debe tener al menos 5 caracteres" });
+                      } else if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,#-]+$/.test(value)) {
+                        setError({ ...error, recipient_address: "Solo se permiten letras, números y símbolos comunes (.,-#)" });
+                      } else if (!/\d/.test(value)) {
+                        setError({ ...error, recipient_address: "Debe incluir al menos un número (ej. Zona 10, Calle 5)" });
+                      } else {
+                        setError({ ...error, recipient_address: null });
+                      }
+                    }}
+                    className={`w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 ${
+                        error.recipient_address ? 'ring-2 ring-red-500' : 'focus:ring-[#00AEEF]'
+                    }`}
+                    placeholder="Zona, Municipio, Departamento"
+                    required
                 />
+                {error.recipient_address && (
+                    <p className="text-red-500 text-sm mt-1">{error.recipient_address}</p>
+                )}
+
               </div>
 
               <div>
                 <label className="block text-sm text-[#2D2D2D] mb-2">Teléfono del destinatario</label>
                 <input
-                  type="tel"
-                  value={formData.recipient_phone}
-                  onChange={(e) => setFormData({ ...formData, recipient_phone: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                  placeholder="+502 1234-5678"
-                  required
+                    type="tel"
+                    value={formData.recipient_phone}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, recipient_phone: value });
+
+                      // Validaciones
+                      const cleanValue = value.replace(/\s|-/g, ""); // quitar espacios y guiones
+                      if (!cleanValue.trim()) {
+                        setError({ ...error, recipient_phone: "El teléfono no puede estar vacío" });
+                      } else if (!/^\+?\d+$/.test(cleanValue)) {
+                        setError({ ...error, recipient_phone: "Solo se permiten dígitos y el prefijo +" });
+                      } else if (cleanValue.startsWith("+502") && cleanValue.length !== 12) {
+                        setError({ ...error, recipient_phone: "El número con prefijo +502 debe tener 12 caracteres" });
+                      } else if (!cleanValue.startsWith("+") && cleanValue.length !== 8) {
+                        setError({ ...error, recipient_phone: "El número debe tener 8 dígitos" });
+                      } else {
+                        setError({ ...error, recipient_phone: null });
+                      }
+                    }}
+                    className={`w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 ${
+                        error.recipient_phone ? 'ring-2 ring-red-500' : 'focus:ring-[#00AEEF]'
+                    }`}
+                    placeholder="+502 1234-5678"
+                    required
                 />
+                {error.recipient_phone && (
+                    <p className="text-red-500 text-sm mt-1">{error.recipient_phone}</p>
+                )}
+
               </div>
             </div>
 
@@ -230,7 +321,13 @@ export function NewShipment() {
                   <input
                     type="number"
                     value={formData.length}
-                    onChange={(e) => setFormData({ ...formData, length: e.target.value })}
+                    onChange={(e) => {
+                      let value = Number(e.target.value);
+                      if (value < 0) value = 0;
+                      const newForm = { ...formData, length: value };
+                      const tipo = calcularTipoPaquete(newForm.length, newForm.width, newForm.height);
+                      setFormData({ ...newForm, package_type: tipo });
+                    }}
                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
                     required
                   />
@@ -240,7 +337,13 @@ export function NewShipment() {
                   <input
                     type="number"
                     value={formData.width}
-                    onChange={(e) => setFormData({ ...formData, width: e.target.value })}
+                    onChange={(e) => {
+                      let value = Number(e.target.value);
+                      if (value < 0) value = 0;
+                      const newForm = { ...formData, width: value };
+                      const tipo = calcularTipoPaquete(newForm.length, newForm.width, newForm.height);
+                      setFormData({ ...newForm, package_type: tipo });
+                    }}
                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
                     required
                   />
@@ -253,7 +356,13 @@ export function NewShipment() {
                   <input
                     type="number"
                     value={formData.height}
-                    onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                    onChange={(e) => {
+                      let value = Number(e.target.value);
+                      if (value < 0) value = 0;
+                      const newForm = { ...formData, height: value };
+                      const tipo = calcularTipoPaquete(newForm.length, newForm.width, newForm.height);
+                      setFormData({ ...newForm, package_type: tipo });
+                    }}
                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
                     required
                   />
@@ -263,7 +372,13 @@ export function NewShipment() {
                   <input
                     type="number"
                     value={formData.weight}
-                    onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                    onChange={(e) =>
+                    {
+                      let value = Number(e.target.value);
+                      if (value < 0) value = 0;
+                      setFormData({ ...formData, weight: value })
+                    }}
+
                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
                     required
                   />
@@ -272,11 +387,13 @@ export function NewShipment() {
 
               <div>
                 <label className="block text-sm text-[#2D2D2D] mb-2">Tipo de paquete</label>
+
                 <select
-                  value={formData.package_type}
-                  onChange={(e) => setFormData({ ...formData, package_type: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                  required
+                    value={formData.package_type}
+                    onChange={(e) => setFormData({ ...formData, package_type: e.target.value })}
+                    disabled={formData.width>0 && formData.length>0 && formData.height}
+                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+                    required
                 >
                   <option value="">Seleccioná el tipo</option>
                   <option value="sobre">Sobre</option>
